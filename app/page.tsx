@@ -1,76 +1,102 @@
-const categories = [
-  "Все",
-  "Мир",
-  "Россия",
-  "Технологии",
-  "Бизнес",
-  "Наука",
-  "Спорт",
-  "Культура",
-];
+﻿import { NewsArticleCard } from "@/components/news-article-card"
+import { news } from "@/lib/news-data"
+import { formatIssueRange } from "@/lib/date-format"
+import { getCurrentIssue, getWeeklyIssues } from "@/lib/weekly-issues"
+
+const siteName = "ДАЙДЖЕСТ | А-СЕТЬ"
 
 export default function Home() {
+  const issues = getWeeklyIssues(news)
+  const currentIssue = getCurrentIssue(news)
+  const archiveIssues = issues.slice(1)
+
   return (
-    <div>
-      <section className="border-b">
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-          <div className="max-w-3xl">
-            <p className="mb-3 text-sm font-medium text-muted-foreground">
-              Новости дня
-            </p>
-
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-              Главные события
-              <br />
-              в одном месте
-            </h1>
-
-            <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
-              Anews собирает важные новости из разных источников и помогает
-              быстро понять, что происходит прямо сейчас.
-            </p>
-          </div>
+    <main className="min-h-screen bg-background">
+      <header className="border-b">
+        <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+          <p className="text-2xl font-bold tracking-tight">{siteName}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Название проекта
+          </p>
         </div>
-      </section>
+      </header>
 
-      <section>
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {categories.map((category, index) => (
-              <button
-                key={category}
-                type="button"
-                className={
-                  index === 0
-                    ? "shrink-0 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-                    : "shrink-0 rounded-full bg-muted px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
-                }
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
+      {currentIssue && (
+        <>
+          <section className="border-b">
+            <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
+              <p className="text-sm font-medium text-muted-foreground">
+                Свежий выпуск
+              </p>
 
-      <section>
-        <div className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-          <div className="rounded-2xl border bg-card p-8 sm:p-12">
-            <div className="flex min-h-[320px] items-center justify-center text-center">
-              <div className="max-w-md">
-                <p className="text-lg font-semibold">
-                  Новости скоро появятся
-                </p>
+              <p className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+                {formatIssueRange(
+                  currentIssue.startDate,
+                  currentIssue.endDate,
+                )}
+              </p>
+            </div>
+          </section>
 
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Здесь будет лента новостей, которую мы подключим на следующем
-                  этапе.
-                </p>
+          <section>
+            <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+              <h1 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                Новости выпуска
+              </h1>
+
+              <div className="mt-8 space-y-12">
+                {currentIssue.articles.map((article) => (
+                  <NewsArticleCard key={article.id} article={article} />
+                ))}
               </div>
             </div>
+          </section>
+        </>
+      )}
+
+      {archiveIssues.length > 0 && (
+        <section className="border-t">
+          <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Архив
+            </h2>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {archiveIssues.map((issue) => (
+                <button
+                  key={`${issue.year}-${issue.week}`}
+                  type="button"
+                  className="rounded-xl border p-5 text-left transition-colors hover:bg-muted"
+                >
+                  <p className="font-semibold">Неделя {issue.week}</p>
+
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {formatIssueRange(issue.startDate, issue.endDate)}
+                  </p>
+
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    {issue.articles.length}{" "}
+                    {issue.articles.length === 1 ? "новость" : "новостей"}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      <footer className="border-t">
+        <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+          <p className="font-semibold">{siteName}</p>
+
+          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+            <span>О проекте</span>
+            <span>Контакты</span>
+            <span>Правовая информация</span>
+            <span>Общая информация</span>
           </div>
         </div>
-      </section>
-    </div>
-  );
+      </footer>
+    </main>
+  )
 }
