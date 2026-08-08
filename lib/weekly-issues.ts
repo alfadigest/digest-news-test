@@ -28,11 +28,11 @@ function getIsoWeek(date: Date) {
 }
 
 function getWeekRange(date: Date) {
-  const day = date.getDay() || 7
-
   const start = new Date(date)
+  const day = start.getDay() || 7
+
   start.setHours(0, 0, 0, 0)
-  start.setDate(date.getDate() - day + 1)
+  start.setDate(start.getDate() - day + 1)
 
   const end = new Date(start)
   end.setDate(start.getDate() + 6)
@@ -44,11 +44,14 @@ function getWeekRange(date: Date) {
   }
 }
 
-export function getWeeklyIssues(articles: NewsArticle[]): WeeklyIssue[] {
+export function getWeeklyIssues(
+  articles: NewsArticle[],
+): WeeklyIssue[] {
   const grouped = new Map<string, WeeklyIssue>()
 
   for (const article of articles) {
     const date = new Date(article.publishedAt)
+
     const { week, year } = getIsoWeek(date)
     const { startDate, endDate } = getWeekRange(date)
 
@@ -67,11 +70,45 @@ export function getWeeklyIssues(articles: NewsArticle[]): WeeklyIssue[] {
     grouped.get(key)!.articles.push(article)
   }
 
-  return Array.from(grouped.values()).sort(
-    (a, b) => b.startDate.getTime() - a.startDate.getTime(),
+  return Array.from(grouped.values())
+    .map((issue) => ({
+      ...issue,
+      articles: [...issue.articles].sort(
+        (a, b) =>
+          new Date(b.publishedAt).getTime() -
+          new Date(a.publishedAt).getTime(),
+      ),
+    }))
+    .sort(
+      (a, b) =>
+        b.startDate.getTime() - a.startDate.getTime(),
+    )
+}
+
+export function getCurrentIssue(
+  articles: NewsArticle[],
+  referenceDate = new Date(),
+) {
+  const { week, year } = getIsoWeek(referenceDate)
+
+  return (
+    getWeeklyIssues(articles).find(
+      (issue) =>
+        issue.week === week &&
+        issue.year === year,
+    ) ?? null
   )
 }
 
-export function getCurrentIssue(articles: NewsArticle[]) {
-  return getWeeklyIssues(articles)[0] ?? null
+export function getArchivedIssues(
+  articles: NewsArticle[],
+  referenceDate = new Date(),
+) {
+  const { week, year } = getIsoWeek(referenceDate)
+
+  return getWeeklyIssues(articles).filter(
+    (issue) =>
+      issue.week !== week ||
+      issue.year !== year,
+  )
 }
