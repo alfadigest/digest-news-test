@@ -66,14 +66,14 @@ export async function POST(request: Request) {
       article,
     })
  } catch (error) {
-  console.error("API ERROR:", error)
+  console.error(error)
 
   return NextResponse.json(
     {
       error:
         error instanceof Error
           ? error.message
-          : JSON.stringify(error),
+          : "Unknown error",
     },
     { status: 500 },
   )
