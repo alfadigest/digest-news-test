@@ -34,19 +34,26 @@ export async function addNews(
     "-" +
     Date.now()
 
-  const { error } = await supabase.from("news").insert({
-    id: article.id,
-    slug,
-    title: article.title,
-    published_at: article.publishedAt,
-    main_image: article.mainImage,
-    images: article.images,
-    paragraphs: article.paragraphs,
-  })
+  const { data, error } = await supabase
+    .from("news")
+    .insert({
+      slug,
+      title: article.title,
+      published_at: article.publishedAt,
+      main_image: article.mainImage,
+      images: article.images,
+      paragraphs: article.paragraphs,
+    })
+    .select()
+    .single()
 
   if (error) {
+    console.error(error)
     throw error
   }
 
-  return article
+  return {
+    ...article,
+    id: data.id,
+  }
 }
