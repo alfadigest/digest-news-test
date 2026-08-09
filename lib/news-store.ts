@@ -1,43 +1,52 @@
 import "server-only"
 
-import { promises as fs } from "fs"
-import path from "path"
-
+import { supabase } from "./supabase"
 import type { NewsArticle } from "@/types/news"
 
-const dataDirectory = path.join(process.cwd(), "data")
-const dataFile = path.join(dataDirectory, "news.json")
-
-async function ensureDataFile() {
-  await fs.mkdir(dataDirectory, { recursive: true })
-
-  try {
-    await fs.access(dataFile)
-  } catch {
-    await fs.writeFile(dataFile, "[]", "utf8")
-  }
-}
-
 export async function getNews(): Promise<NewsArticle[]> {
-  await ensureDataFile()
+  const { data, error } = await supabase
+    .from("news")
+    .select("*")
+    .order("published_at", { ascending: false })
 
-  const content = await fs.readFile(dataFile, "utf8")
+  if (error) {
+    throw error
+  }
 
-  return JSON.parse(content) as NewsArticle[]
+  return (data ?? []).map((item) => ({
+    id: item.id,
+    title: item.title,
+    publishedAt: item.published_at,
+    mainImage: item.main_image,
+    images: item.images ?? [],
+    paragraphs: item.paragraphs ?? [],
+  }))
 }
 
 export async function addNews(
   article: NewsArticle,
 ): Promise<NewsArticle> {
-  const articles = await getNews()
+  const slug =
+    article.title
+      .toLowerCase()
+      .replace(/[^a-zа-я0-9]+/gi, "-")
+      .replace(/^-|-$/g, "") +
+    "-" +
+    Date.now()
 
-  articles.push(article)
+  const { error } = await supabase.from("news").insert({
+    id: article.id,
+    slug,
+    title: article.title,
+    published_at: article.publishedAt,
+    main_image: article.mainImage,
+    images: article.images,
+    paragraphs: article.paragraphs,
+  })
 
-  await fs.writeFile(
-    dataFile,
-    JSON.stringify(articles, null, 2),
-    "utf8",
-  )
+  if (error) {
+    throw error
+  }
 
   return article
 }
