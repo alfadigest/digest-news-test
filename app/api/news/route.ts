@@ -7,75 +7,26 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
 
-    const title = String(body.title ?? "").trim()
-    const publishedAt = String(body.publishedAt ?? "").trim()
-    const mainImage = String(body.mainImage ?? "").trim()
-    const paragraphs = Array.isArray(body.paragraphs)
-      ? body.paragraphs
-          .map((paragraph: unknown) => String(paragraph).trim())
-          .filter(Boolean)
-      : []
-
-    const images = Array.isArray(body.images)
-      ? body.images
-          .map((image: unknown) => String(image).trim())
-          .filter(Boolean)
-      : []
-
-    if (!title) {
-      return NextResponse.json(
-        { error: "Не указан заголовок новости" },
-        { status: 400 },
-      )
-    }
-
-    if (!publishedAt) {
-      return NextResponse.json(
-        { error: "Не указана дата публикации" },
-        { status: 400 },
-      )
-    }
-
-    if (!mainImage) {
-      return NextResponse.json(
-        { error: "Не указано главное изображение" },
-        { status: 400 },
-      )
-    }
-
-    if (paragraphs.length === 0) {
-      return NextResponse.json(
-        { error: "Добавьте текст новости" },
-        { status: 400 },
-      )
-    }
-
     const article: NewsArticle = {
-      id: `news-${Date.now()}`,
-      title,
-      publishedAt,
-      mainImage,
-      images,
-      paragraphs,
+      id: crypto.randomUUID(),
+      title: body.title,
+      publishedAt: body.publishedAt,
+      mainImage: body.mainImage,
+      images: body.images ?? [],
+      paragraphs: body.paragraphs ?? [],
     }
 
-    await addNews(article)
+    const saved = await addNews(article)
 
-    return NextResponse.json({
-      success: true,
-      article,
-    })
- } catch (error) {
-  console.error(error)
+    return NextResponse.json(saved)
+  } catch (error) {
+    console.error("API ERROR:", error)
 
-  return NextResponse.json(
-    {
-      error:
-        error instanceof Error
-          ? error.message
-          : "Unknown error",
-    },
-    { status: 500 },
-  )
-} 
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 },
+    )
+  }
 }
