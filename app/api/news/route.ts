@@ -65,10 +65,17 @@ export async function POST(request: Request) {
       success: true,
       article,
     })
-  } catch {
-    return NextResponse.json(
-      { error: "Не удалось сохранить новость" },
-      { status: 500 },
-    )
-  }
+ } catch (error) {
+  console.error("API ERROR:", error)
+
+  return NextResponse.json(
+    {
+      error:
+        error instanceof Error
+          ? error.message
+          : JSON.stringify(error),
+    },
+    { status: 500 },
+  )
+} 
 }
